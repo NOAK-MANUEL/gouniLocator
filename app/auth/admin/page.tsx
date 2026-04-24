@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import AddLocationModal from "@/components/addLocationModal";
-import { getLocations } from "@/lib/actions";
+import {
+  deleteLocationFromDb,
+  editLocationFromDB,
+  getLocations,
+} from "@/lib/actions";
+import { locationType } from "@/lib/formTypes";
 
 export default function AdminPage() {
   interface LocationType {
@@ -16,6 +21,7 @@ export default function AdminPage() {
   }
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<LocationType[]>([]);
+  const [edit, setEdit] = useState<string>();
 
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -27,11 +33,41 @@ export default function AdminPage() {
     });
   }, []);
 
+  const deleteLocation = async (id: string) => {
+    const res = await deleteLocationFromDb(id);
+    if (!res.success) return alert(res.message);
+    setLocations(locations.filter((loc) => loc.id !== id));
+    alert("Deleted Successfully");
+  };
+  const editLocation = async (data: locationType) => {
+    if (!edit) return;
+    const res = await editLocationFromDB(data, edit);
+    alert(res.message);
+    if (res.success) {
+      const currentIndex = locations.findIndex((l) => l.id === edit);
+
+      if (currentIndex === -1) return;
+
+      const newLocations = [...locations];
+
+      newLocations[currentIndex] = {
+        ...locations[currentIndex],
+        ...data,
+        aliases: data.aliases.split(",").map((a) => a.trim()), // 🔥 FIX
+      };
+
+      setLocations(newLocations);
+      setOpen(false);
+    }
+  };
+
   return (
     <div>
       {/* HEADER */}
       <section className="bg-gradient-to-r from-emerald-800 to-emerald-600 text-white">
-        <div className="container-app py-10 flex justify-between items-center">
+        <div
+          className={`container-app py-10 flex justify-between items-center flex-col gap-3.5 md:flex-row `}
+        >
           <div>
             <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             <p className="text-white/80 text-sm mt-1">
@@ -39,12 +75,20 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setOpen(true)}
-            className="bg-white text-emerald-700 px-5 py-2 rounded-xl font-medium"
-          >
-            + Add Location
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setOpen(true)}
+              className="bg-white text-emerald-700 px-5 py-2 rounded-xl font-medium"
+            >
+              + Add Location
+            </button>
+            <button
+              onClick={() => setOpen(true)}
+              className="bg-white text-emerald-700 px-5 py-2 rounded-xl font-medium"
+            >
+              + Add Admin
+            </button>
+          </div>
         </div>
       </section>
 
@@ -78,7 +122,7 @@ export default function AdminPage() {
           </div>
 
           {/* TABLE */}
-          <div className="overflow-x-auto">
+          <div className="max-h-[300px] overflow-y-scroll">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>
@@ -106,11 +150,20 @@ export default function AdminPage() {
                     <td className="text-gray-500">{l.description}</td>
 
                     <td className="text-right pr-4 space-x-3">
-                      <button className="text-emerald-600 hover:underline">
+                      <button
+                        onClick={() => {
+                          setOpen(true);
+                          setEdit(l.id);
+                        }}
+                        className="text-emerald-600 hover:underline"
+                      >
                         Edit
                       </button>
 
-                      <button className="text-red-500 hover:underline">
+                      <button
+                        onClick={() => deleteLocation(l.id)}
+                        className="text-red-500 hover:underline"
+                      >
                         Delete
                       </button>
                     </td>
@@ -121,7 +174,12 @@ export default function AdminPage() {
           </div>
         </div>
       </section>
-      <AddLocationModal open={open} onClose={() => setOpen(false)} />
+      <AddLocationModal
+        editLocation={editLocation}
+        isEdit={edit ? locations.find((l) => l.id === edit) || null : null}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </div>
   );
 }

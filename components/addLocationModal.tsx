@@ -5,35 +5,51 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { storeLocation } from "@/lib/actions";
+import { LocationType } from "@/lib/types";
 
 export default function AddLocationModal({
   open,
   onClose,
+  isEdit,
+  editLocation,
 }: {
   open: boolean;
+  isEdit: LocationType | null;
   onClose: () => void;
+  editLocation: (data: locationType) => void;
 }) {
   const {
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { isSubmitting, errors },
   } = useForm<locationType>({
     resolver: zodResolver(addLocationSchema),
   });
+  // const [edit]
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+
+    window.addEventListener("keydown", handle);
+    if (isEdit) {
+      const content = { ...isEdit, aliases: isEdit.aliases.join(",") };
+      reset(content as locationType);
+    }
+
+    return () => window.removeEventListener("keydown", handle);
+  }, [onClose, setValue, isEdit, reset]);
+
+  if (!open) return null;
+
+  const useLocation = () => {
     navigator.geolocation.getCurrentPosition((pos) => {
       setValue("lat", pos.coords.latitude);
       setValue("long", pos.coords.longitude);
     });
-    window.addEventListener("keydown", handle);
-    return () => window.removeEventListener("keydown", handle);
-  }, [onClose, setValue]);
-
-  if (!open) return null;
+  };
 
   const addLocation = async (data: locationType) => {
     const res = await storeLocation(data);
@@ -42,92 +58,146 @@ export default function AddLocationModal({
   };
 
   return (
-    <div className="sticky inset-0 z-60 flex items-center justify-center">
+    <div className="sticky inset-0 z-50 flex items-center justify-center px-4">
       {/* BACKDROP */}
       <div
-        onClick={() => onClose()}
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fadeIn"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn"
       />
 
       {/* MODAL */}
-      <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 animate-scaleIn">
+      <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl animate-scaleIn">
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Add New Location</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-black">
+        <div className="flex justify-between items-center px-6 py-5 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">
+              {isEdit ? "Edit Location" : "Add New Location"}
+            </h2>
+            <p className="text-sm text-gray-500">Fill in the details below</p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition"
+          >
             ✕
           </button>
         </div>
 
         {/* FORM */}
-        <form onSubmit={handleSubmit(addLocation)} className="space-y-2">
+        <form
+          onSubmit={handleSubmit(isEdit ? editLocation : addLocation)}
+          className="px-6 py-6 space-y-6"
+        >
+          {/* NAME */}
           <div>
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium text-gray-700">Name</label>
             <input
-              className="input mt-1"
               {...register("name")}
+              className="input mt-2"
               placeholder="e.g. VC Office"
             />
-            <p className="text-red-700">{errors.name?.message}</p>
+            {errors.name && (
+              <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+            )}
           </div>
 
+          {/* CATEGORY */}
           <div>
-            <label className="text-sm font-medium">Category</label>
+            <label className="text-sm font-medium text-gray-700">
+              Category
+            </label>
             <input
               {...register("category")}
-              className="input mt-1"
-              placeholder="Hostel"
+              className="input mt-2"
+              placeholder="Hostel / Academic"
             />
-            <p className="text-red-700">{errors.category?.message}</p>
+            {errors.category && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.category.message}
+              </p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              {...register("lat")}
-              className="input"
-              placeholder="Latitude"
-            />
-            <input
-              {...register("long")}
-              className="input"
-              placeholder="Longitude"
-            />
-          </div>
-          <p className="text-red-700">{errors.lat?.message}</p>
-          <p className="text-red-700">{errors.long?.message}</p>
-
+          {/* COORDINATES */}
           <div>
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-sm font-medium text-gray-700">
+              Coordinates
+            </label>
+
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <input
+                {...register("lat")}
+                className="input"
+                placeholder="Latitude"
+              />
+              <input
+                {...register("long")}
+                className="input"
+                placeholder="Longitude"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={useLocation}
+              className="mt-3 text-sm text-emerald-700 hover:underline"
+            >
+              Use my current location 📍
+            </button>
+
+            {(errors.lat || errors.long) && (
+              <p className="text-xs text-red-500 mt-1">Invalid coordinates</p>
+            )}
+          </div>
+
+          {/* DESCRIPTION */}
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Description
+            </label>
             <textarea
               {...register("description")}
-              className="input mt-1"
-              rows={2}
+              className="input mt-2"
+              rows={3}
             />
-            <p className="text-red-700">{errors.description?.message}</p>
+            {errors.description && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
+          {/* ALIASES */}
           <div>
-            <label className="text-sm font-medium">Aliases</label>
+            <label className="text-sm font-medium text-gray-700">Aliases</label>
             <input
-              className="input mt-1"
               {...register("aliases")}
+              className="input mt-2"
               placeholder="VC Office, Admin Block"
             />
-            <p className="text-red-700">{errors.aliases?.message}</p>
+            {errors.aliases && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.aliases.message}
+              </p>
+            )}
           </div>
 
           {/* ACTIONS */}
-          <div className="flex justify-between  pt-3">
-            <button type="button" onClick={onClose} className="btn-secondary">
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl border hover:bg-gray-50 transition"
+            >
               Cancel
             </button>
 
             <button
               disabled={isSubmitting}
-              type="submit"
-              className={`btn-primary ${isSubmitting && "cursor-not-allowed"}`}
+              className="px-5 py-2 rounded-xl bg-emerald-700 text-white font-medium hover:bg-emerald-800 transition disabled:opacity-50"
             >
-              Save Location
+              {isEdit ? "Save Update" : "Save Location"}
             </button>
           </div>
         </form>

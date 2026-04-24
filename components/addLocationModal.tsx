@@ -38,6 +38,7 @@ export default function AddLocationModal({
   const addLocation = async (data: locationType) => {
     const res = await storeLocation(data);
     alert(res.message);
+    if (res.success) return onClose();
   };
 
   return (
@@ -87,7 +88,7 @@ export default function AddLocationModal({
               placeholder="Latitude"
             />
             <input
-              {...register("lat")}
+              {...register("long")}
               className="input"
               placeholder="Longitude"
             />

@@ -1,4 +1,6 @@
-export default function LocationCard({ location }: any) {
+import { locationType } from "@/lib/formTypes";
+
+export default function LocationCard({ location }: { location: locationType }) {
   return (
     <div className="card p-5 group cursor-pointer">
       {/* HEADER */}

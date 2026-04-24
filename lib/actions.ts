@@ -8,10 +8,10 @@ export const storeLocation = async (input: locationType) => {
   try {
     const { category, aliases, lat, long, name, description } =
       addLocationSchema.parse(input);
-    const isValid = await isAdmin();
-    if (!isValid) {
-      throw new Error("Invalid User");
-    }
+    // const isValid = await isAdmin();
+    // if (!isValid) {
+    //   throw new Error("Invalid User");
+    // }
 
     await prismaClient.locations.create({
       data: {
@@ -27,7 +27,30 @@ export const storeLocation = async (input: locationType) => {
       },
     });
     return {
+      success: true,
       message: "Successfully Added",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error && error.message,
+    };
+  }
+};
+export const getLocations = async () => {
+  try {
+    const locations = await prismaClient.locations.findMany({
+      orderBy: {
+        created_at: "asc",
+      },
+      omit: {
+        created_at: true,
+        num_of_search: true,
+      },
+    });
+    return {
+      success: true,
+      locations,
     };
   } catch (error) {
     return {

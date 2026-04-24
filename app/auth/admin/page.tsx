@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { locations } from "@/lib/locations";
+import { useEffect, useState } from "react";
 import AddLocationModal from "@/components/addLocationModal";
+import { getLocations } from "@/lib/actions";
 
 export default function AdminPage() {
+  interface LocationType {
+    id: string;
+    name: string;
+    category: string;
+    lat: number | null;
+    long: number | null;
+    description: string | null;
+    aliases: string[];
+  }
   const [query, setQuery] = useState("");
+  const [locations, setLocations] = useState<LocationType[]>([]);
 
-  const filtered = locations.filter((l) =>
-    l.name.toLowerCase().includes(query.toLowerCase()),
-  );
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    getLocations().then((dat) => {
+      if (!dat.success) {
+        return alert(dat.message);
+      }
+      setLocations(dat.locations || []);
+    });
+  }, []);
 
   return (
     <div>
@@ -48,11 +63,6 @@ export default function AdminPage() {
               {new Set(locations.map((l) => l.category)).size}
             </p>
           </div>
-
-          <div className="card p-5">
-            <p className="text-sm text-gray-500">System Status</p>
-            <p className="text-emerald-600 font-semibold mt-1">Active</p>
-          </div>
         </div>
 
         {/* SEARCH + TABLE */}
@@ -80,7 +90,7 @@ export default function AdminPage() {
               </thead>
 
               <tbody>
-                {filtered.map((l) => (
+                {locations.map((l) => (
                   <tr
                     key={l.id}
                     className="border-t hover:bg-gray-50 transition"

@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { locations } from "@/lib/locations";
+import { useEffect, useState } from "react";
 import LocationCard from "@/components/locationCard";
+import { getLocations } from "@/lib/actions";
+import { LocationType } from "@/lib/types";
 
 export default function Home() {
-  const [query, setQuery] = useState("");
+  // const [query, setQuery] = useState("");
 
-  const filtered = locations.filter(
-    (l) =>
-      l.name.toLowerCase().includes(query.toLowerCase()) ||
-      l.aliases.some((a) => a.toLowerCase().includes(query.toLowerCase())),
-  );
+  const [locations, setLocations] = useState<LocationType[]>([]);
+
+  useEffect(() => {
+    getLocations().then((dat) => {
+      if (!dat.success) {
+        return alert(dat.message);
+      }
+      setLocations(dat.locations || []);
+    });
+  }, []);
 
   return (
     <div>
@@ -41,12 +47,12 @@ export default function Home() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold">All Locations</h2>
           <span className="text-sm text-gray-500">
-            {filtered.length} results
+            {locations.length} results
           </span>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {filtered.map((loc) => (
+          {locations.map((loc) => (
             <LocationCard key={loc.id} location={loc} />
           ))}
         </div>

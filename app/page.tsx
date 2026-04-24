@@ -33,9 +33,9 @@ export default function Home() {
           </p>
 
           {/* SEARCH */}
-          <div className="mt-8 max-w-xl mx-auto relative animate-fadeIn delay-200">
+          <div className="mt-8 max-w-xl mx-auto relative animate-fadeIn delay-200 ">
             <input
-              className="w-full px-5 py-4 rounded-xl text-black shadow-lg focus:ring-2 focus:ring-white outline-none"
+              className="w-full px-5 py-4 rounded-xl text-black shadow-lg focus:ring-2 focus:ring-white outline-none bg-white"
               placeholder="Search VC Office, Library..."
             />
           </div>

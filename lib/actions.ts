@@ -41,7 +41,7 @@ export const getLocations = async () => {
   try {
     const locations = await prismaClient.locations.findMany({
       orderBy: {
-        created_at: "asc",
+        created_at: "desc",
       },
       omit: {
         created_at: true,
@@ -51,6 +51,29 @@ export const getLocations = async () => {
     return {
       success: true,
       locations,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error && error.message,
+    };
+  }
+};
+export const getLocation = async (id: string) => {
+  try {
+    if (!id) throw new Error("No id found");
+    const location = await prismaClient.locations.findFirst({
+      where: {
+        id,
+      },
+      omit: {
+        created_at: true,
+        num_of_search: true,
+      },
+    });
+    return {
+      success: true,
+      location,
     };
   } catch (error) {
     return {

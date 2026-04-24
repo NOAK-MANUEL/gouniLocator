@@ -1,8 +1,12 @@
 import { LocationType } from "@/lib/types";
+import Link from "next/link";
 
 export default function LocationCard({ location }: { location: LocationType }) {
   return (
-    <div className="card p-5 group cursor-pointer">
+    <Link
+      href={`/location/${location.id}`}
+      className="card p-5 group cursor-pointer"
+    >
       {/* HEADER */}
       <div className="flex items-start justify-between">
         <div>
@@ -26,6 +30,6 @@ export default function LocationCard({ location }: { location: LocationType }) {
         <span>{location.aliases[0]}</span>
         <span>Campus</span>
       </div>
-    </div>
+    </Link>
   );
 }

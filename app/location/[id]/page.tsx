@@ -47,9 +47,9 @@ export default function LocationPage() {
     const dy = target.lat - user.lat;
 
     if (Math.abs(dx) > Math.abs(dy)) {
-      return dx > 0 ? "➡️ Move Right" : "⬅️ Move Left";
+      return dx > 0 ? "⬅️ Move Left" : "➡️ Move Right";
     } else {
-      return dy > 0 ? "⬆️ Move Forward" : "⬇️ Move Back";
+      return dy > 0 ? "⬇️ Move Back" : "⬆️ Move Forward";
     }
   }
 
@@ -89,7 +89,6 @@ export default function LocationPage() {
     };
   }, []);
 
-  // ⏳ LOADING UI (IMPORTANT)
   if (loading) {
     return (
       <div className="container-app py-20 text-center">
@@ -98,7 +97,6 @@ export default function LocationPage() {
     );
   }
 
-  // ❌ NOT FOUND (NOW CORRECT)
   if (notFoundState) {
     return (
       <div className="container-app py-20 text-center">
@@ -173,7 +171,8 @@ export default function LocationPage() {
                 userPos.lng,
                 location.lat!,
                 location.long!,
-              ).toFixed(2)}{" "}
+              ).toFixed(2)}
+              {""}
               km
             </p>
             <p className="mt-3 text-lg font-medium text-emerald-700">

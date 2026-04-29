@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import LocationCard from "@/components/locationCard";
-import { getLocations } from "@/lib/actions";
+import { getLocations, searchLocationFromDb } from "@/lib/actions";
 import { LocationType } from "@/lib/types";
 
 export default function Home() {
-  // const [query, setQuery] = useState("");
+  const [filteredLocations, setFilteredLocations] = useState<LocationType[]>(
+    [],
+  );
 
   const [locations, setLocations] = useState<LocationType[]>([]);
 
@@ -18,6 +20,14 @@ export default function Home() {
       setLocations(dat.locations || []);
     });
   }, []);
+
+  const searchLocation = async (input: string) => {
+    if (input.length < 3 && filteredLocations.length < 1) return;
+    if (input.length < 3) return setFilteredLocations([]);
+    const res = await searchLocationFromDb(input);
+    if (res?.message) return alert(res.message);
+    setFilteredLocations(res?.locationsFound || []);
+  };
 
   return (
     <div>
@@ -35,8 +45,9 @@ export default function Home() {
           {/* SEARCH */}
           <div className="mt-8 max-w-xl mx-auto relative animate-fadeIn delay-200 ">
             <input
+              onChange={(evt) => searchLocation(evt.target.value)}
               className="w-full px-5 py-4 rounded-xl text-black shadow-lg focus:ring-2 focus:ring-white outline-none bg-white"
-              placeholder="Search VC Office, Library..."
+              placeholder="Search VC Office, Library,Hostel..."
             />
           </div>
         </div>
@@ -47,14 +58,20 @@ export default function Home() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold">All Locations</h2>
           <span className="text-sm text-gray-500">
-            {locations.length} results
+            {
+              (filteredLocations.length > 0 ? filteredLocations : locations)
+                .length
+            }{" "}
+            results
           </span>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {locations.map((loc) => (
-            <LocationCard key={loc.id} location={loc} />
-          ))}
+          {(filteredLocations.length > 0 ? filteredLocations : locations).map(
+            (loc) => (
+              <LocationCard key={loc.id} location={loc} />
+            ),
+          )}
         </div>
       </section>
     </div>

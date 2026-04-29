@@ -5,10 +5,10 @@ export default function LocationCard({ location }: { location: LocationType }) {
   return (
     <Link
       href={`/location/${location.id}`}
-      className="group relative bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className="group relative bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 "
     >
       {/* TOP BADGE */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start ">
         <div>
           <span className="inline-block text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 mb-2">
             {location.category}

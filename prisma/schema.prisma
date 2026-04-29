@@ -22,6 +22,7 @@ model Admins{
  
   password String
 
+  created_by String @default("admin")
   last_loggedIn DateTime @default(now())
   created_at DateTime @default(now())
  

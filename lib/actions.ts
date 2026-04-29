@@ -1,9 +1,41 @@
 "use server";
 
-import { addLocationSchema, locationType } from "@/lib/formTypes";
+import {
+  addAdminSchema,
+  addLocationSchema,
+  adminType,
+  locationType,
+} from "@/lib/formTypes";
 import prismaClient from "@/lib/prisma";
 import { cookies } from "next/headers";
+import bcrypt from "bcrypt";
 
+export const storeAdmin = async (input: adminType) => {
+  try {
+    const { name, email, password } = addAdminSchema.parse(input);
+    // const isValid = await isAdmin();
+    // if (!isValid) {
+    //   throw new Error("Invalid User");
+    // }
+
+    await prismaClient.admins.create({
+      data: {
+        username: name,
+        email,
+        password: bcrypt.hashSync(password, bcrypt.genSaltSync(10)),
+      },
+    });
+    return {
+      success: true,
+      message: "Successfully Added",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error && error.message,
+    };
+  }
+};
 export const storeLocation = async (input: locationType) => {
   try {
     const { category, aliases, lat, long, name, description } =
@@ -17,7 +49,7 @@ export const storeLocation = async (input: locationType) => {
       data: {
         category,
         aliases: aliases
-          .split(",")
+          ?.split(",")
           .slice(0, 5)
           .map((tag) => tag.trim().toLowerCase()),
         lat,
@@ -37,6 +69,34 @@ export const storeLocation = async (input: locationType) => {
     };
   }
 };
+export const searchLocationFromDb = async (input: string) => {
+  try {
+    if (input.length < 3) return;
+
+    const locationsFound = await prismaClient.locations.findMany({
+      where: {
+        OR: [
+          {
+            name: { contains: input, mode: "insensitive" },
+          },
+          {
+            aliases: { has: input.toLowerCase() },
+          },
+          {
+            category: { equals: input, mode: "insensitive" },
+          },
+        ],
+      },
+    });
+    return {
+      locationsFound,
+    };
+  } catch (error) {
+    return {
+      message: error instanceof Error && error.message,
+    };
+  }
+};
 export const editLocationFromDB = async (input: locationType, id: string) => {
   try {
     const { category, aliases, lat, long, name, description } =
@@ -50,7 +110,7 @@ export const editLocationFromDB = async (input: locationType, id: string) => {
       data: {
         category,
         aliases: aliases
-          .split(",")
+          ?.split(",")
           .slice(0, 5)
           .map((tag) => tag.trim().toLowerCase()),
         lat,

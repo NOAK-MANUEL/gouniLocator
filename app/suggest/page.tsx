@@ -1,10 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { storeLocation } from "@/lib/actions";
+import { addLocationSchema, locationType } from "@/lib/formTypes";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 
 export default function SuggestPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    formState: { isSubmitted, isSubmitting, errors },
+  } = useForm<locationType>({
+    resolver: zodResolver(addLocationSchema),
+  });
 
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setValue("lat", pos.coords.latitude);
+      setValue("long", pos.coords.longitude);
+    });
+  }, [setValue]);
+
+  const addLocation = async (data: locationType) => {
+    const res = await storeLocation(data);
+    if (!res.success) return alert(res.message);
+  };
   return (
     <div>
       {/* HERO */}
@@ -22,49 +44,65 @@ export default function SuggestPage() {
       {/* FORM SECTION */}
       <section className="container-app py-12">
         <div className="max-w-2xl mx-auto">
-          {!submitted ? (
+          {!isSubmitted ? (
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-1">Location Details</h2>
               <p className="text-sm text-gray-500 mb-6">
                 Provide accurate information to help others navigate easily.
               </p>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSubmitted(true);
-                }}
-                className="space-y-5"
-              >
+              <form onSubmit={handleSubmit(addLocation)} className="space-y-5">
                 {/* NAME */}
                 <div>
                   <label className="text-sm font-medium">Location Name</label>
                   <input
+                    {...register("name")}
                     className="input mt-1"
                     placeholder="e.g. Faculty of Engineering"
                     required
                   />
+                  {errors.name && (
+                    <p className="bg-red-300 p-2 text-white rounded-lg">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* CATEGORY */}
                 <div>
                   <label className="text-sm font-medium">Category</label>
                   <input
+                    {...register("category")}
                     className="input mt-1"
                     placeholder="Academic / Hostel / Admin"
                   />
+                  {errors.category && (
+                    <p className="bg-red-300 p-2 text-white rounded-lg">
+                      {errors.category.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* COORDINATES */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Latitude</label>
-                    <input className="input mt-1" />
+                    <input {...register("lat")} className="input mt-1" />
+                    {errors.lat && (
+                      <p className="bg-red-300 p-2 text-white rounded-lg">
+                        {errors.lat.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <label className="text-sm font-medium">Longitude</label>
-                    <input className="input mt-1" />
+                    <input {...register("long")} className="input mt-1" />
+                    {errors.long && (
+                      <p className="bg-red-300 p-2 text-white rounded-lg">
+                        {errors.long.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -73,14 +111,20 @@ export default function SuggestPage() {
                   <label className="text-sm font-medium">Description</label>
                   <textarea
                     className="input mt-1"
+                    {...register("description")}
                     rows={3}
                     placeholder="Short description of the location..."
                   />
+                  {errors.description && (
+                    <p className="bg-red-300 p-2 text-white rounded-lg">
+                      {errors.description.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* SUBMIT */}
-                <button className="btn-primary w-full">
-                  Submit Suggestion
+                <button disabled={isSubmitting} className="btn-primary w-full">
+                  {isSubmitting ? "Submitting.." : "Submit Suggestion"}
                 </button>
               </form>
             </div>
@@ -96,12 +140,12 @@ export default function SuggestPage() {
                 campus navigation.
               </p>
 
-              <button
+              {/* <button
                 onClick={() => setSubmitted(false)}
                 className="btn-primary mt-6"
               >
                 Add another
-              </button>
+              </button> */}
             </div>
           )}
         </div>

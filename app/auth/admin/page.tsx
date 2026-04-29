@@ -6,8 +6,10 @@ import {
   deleteLocationFromDb,
   editLocationFromDB,
   getLocations,
+  searchLocationFromDb,
 } from "@/lib/actions";
 import { locationType } from "@/lib/formTypes";
+import AddAdminModal from "@/components/addAdminModal";
 
 export default function AdminPage() {
   interface LocationType {
@@ -19,11 +21,14 @@ export default function AdminPage() {
     description: string | null;
     aliases: string[];
   }
-  const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<LocationType[]>([]);
+  const [filteredLocations, setFilteredLocations] = useState<LocationType[]>(
+    [],
+  );
   const [edit, setEdit] = useState<string>();
 
   const [open, setOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   useEffect(() => {
     getLocations().then((dat) => {
       if (!dat.success) {
@@ -32,6 +37,13 @@ export default function AdminPage() {
       setLocations(dat.locations || []);
     });
   }, []);
+  const searchLocation = async (input: string) => {
+    if (input.length < 3 && filteredLocations.length < 1) return;
+    if (input.length < 3) return setFilteredLocations([]);
+    const res = await searchLocationFromDb(input);
+    if (res?.message) return alert(res.message);
+    setFilteredLocations(res?.locationsFound || []);
+  };
 
   const deleteLocation = async (id: string) => {
     const res = await deleteLocationFromDb(id);
@@ -53,7 +65,7 @@ export default function AdminPage() {
       newLocations[currentIndex] = {
         ...locations[currentIndex],
         ...data,
-        aliases: data.aliases.split(",").map((a) => a.trim()), // 🔥 FIX
+        aliases: data.aliases?.split(",").map((a) => a.trim()) || [],
       };
 
       setLocations(newLocations);
@@ -83,7 +95,7 @@ export default function AdminPage() {
               + Add Location
             </button>
             <button
-              onClick={() => setOpen(true)}
+              onClick={() => setAdminOpen(true)}
               className="bg-white text-emerald-700 px-5 py-2 rounded-xl font-medium"
             >
               + Add Admin
@@ -116,8 +128,7 @@ export default function AdminPage() {
             <input
               className="input"
               placeholder="Search locations..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => searchLocation(e.target.value)}
             />
           </div>
 
@@ -134,7 +145,10 @@ export default function AdminPage() {
               </thead>
 
               <tbody>
-                {locations.map((l) => (
+                {(filteredLocations.length > 0
+                  ? filteredLocations
+                  : locations
+                ).map((l) => (
                   <tr
                     key={l.id}
                     className="border-t hover:bg-gray-50 transition"
@@ -180,6 +194,7 @@ export default function AdminPage() {
         open={open}
         onClose={() => setOpen(false)}
       />
+      <AddAdminModal open={adminOpen} onClose={() => setAdminOpen(false)} />
     </div>
   );
 }
